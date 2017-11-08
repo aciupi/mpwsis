@@ -5,21 +5,21 @@ class Node(object):
 
 
 class Link(object):
-    def __init__(self, id, source, target, setupCost, modules=None):
+    def __init__(self, id, source, target, setup_cost, modules=None):
         self.id = id
         self.source = source
         self.target = target
-        self.setupCost = setupCost
-        self.additionalModules = modules  # [{'capacity': , 'cost': }, ... ]
+        self.setup_cost = setup_cost
+        self.additional_modules = modules  # [{'capacity': , 'cost': }, ... ]
 
 
 class Demand(object):
-    def __init__(self, id, source, target, demandValue, admissiblePaths=None):
+    def __init__(self, id, source, target, demand_value, admissible_paths=None):
         self.id = id
         self.source = source
         self.target = target
-        self.demandValue = demandValue
-        self.admissiblePaths = admissiblePaths  # [{'path_id': [link.id, link.id ...]}, ... ]
+        self.demand_value = demand_value
+        self.admissible_paths = admissible_paths  # [{'path_id': [link.id, link.id ...]}, ... ]
 
 
 class Network(object):
