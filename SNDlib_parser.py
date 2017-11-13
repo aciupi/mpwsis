@@ -1,7 +1,7 @@
 import re
 import xml.etree.ElementTree as ET
 
-from network_objects import Node, Link, Demand, Network
+from network_objects import Node, Link, Demand
 
 
 class SNDlibParser(object):
@@ -10,27 +10,25 @@ class SNDlibParser(object):
         self.root = self.network_xml.getroot()
         self.namespace = self.parse_namespace(self.root)
         self.networkStructure = self.root.findall(self.namespace + 'networkStructure')[0]
-        self.network = Network()
 
-    def parse_to_object(self):
-        self.parse_nodes(self.networkStructure.findall(self.namespace + 'nodes')[0])
-        self.parse_links(self.networkStructure.findall(self.namespace + 'links')[0])
-        self.parse_demands(self.root.findall(self.namespace + 'demands')[0])
-        return self.network
+    def parse_to_object(self, network):
+        self.parse_nodes(self.networkStructure.findall(self.namespace + 'nodes')[0], network)
+        self.parse_links(self.networkStructure.findall(self.namespace + 'links')[0], network)
+        # self.parse_demands(self.root.findall(self.namespace + 'demands')[0], network)
 
-    def parse_nodes(self, nodes):
+    def parse_nodes(self, nodes, network):
         for node in self.parse_nodes_list(nodes):
-            self.network.nodes.append(Node(self.parse_id(node), self.parse_coordinates(node)))
+            network.nodes.append(Node(self.parse_id(node), self.parse_coordinates(node)))
 
-    def parse_links(self, links):
+    def parse_links(self, links, network):
         for link in self.parse_links_list(links):
-            self.network.links.append(
+            network.links.append(
                 Link(self.parse_id(link), self.parse_source(link), self.parse_target(link),
                      self.parse_setup_cost(link), self.parse_modules(link)))
 
-    def parse_demands(self, demands):
+    def parse_demands(self, demands, network):
         for demand in self.parse_demands_list(demands):
-            self.network.demands.append(
+            network.demands.append(
                 Demand(self.parse_id(demand), self.parse_source(demand), self.parse_target(demand),
                        self.parse_demand_value(demand),
                        self.parse_admissible_paths(demand)))
@@ -41,8 +39,8 @@ class SNDlibParser(object):
 
     def parse_coordinates(self, node):
         coordinates = node.find(self.namespace + 'coordinates')
-        x = coordinates.find(self.namespace + 'x').text
-        y = coordinates.find(self.namespace + 'y').text
+        x = float(coordinates.find(self.namespace + 'x').text)
+        y = float(coordinates.find(self.namespace + 'y').text)
         return {'x': x, 'y': y}
 
     def parse_id(self, node):
