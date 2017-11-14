@@ -35,7 +35,7 @@ class Network(object):
     def __init__(self):
         self.nodes = []
         self.links = []
-        self.demands = []
+        #self.demands = []
 
     def get_nodes(self):
         return [node.get_description() for node in self.nodes]
