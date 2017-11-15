@@ -35,7 +35,14 @@ class Network(object):
     def __init__(self):
         self.nodes = []
         self.links = []
-        #self.demands = []
+        # self.demands = []
+        self.flow_values = {}
+
+    def calculate_flow_values(self):
+        for node1 in self.nodes:
+            for node2 in self.nodes:
+                self.flow_values[self.nodes.index(node1), self.nodes.index(node2)] = 10 * (
+                abs(self.nodes.index(node1) - self.nodes.index(node2)))
 
     def get_nodes(self):
         return [node.get_description() for node in self.nodes]
