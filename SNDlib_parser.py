@@ -1,7 +1,7 @@
 import re
 import xml.etree.ElementTree as ET
 
-from network_objects import Node, Link, Demand
+from network_objects import Node, Link, Demand, Network
 
 
 class SNDlibParser(object):
@@ -10,25 +10,27 @@ class SNDlibParser(object):
         self.root = self.network_xml.getroot()
         self.namespace = self.parse_namespace(self.root)
         self.networkStructure = self.root.findall(self.namespace + 'networkStructure')[0]
+        self.network = Network()
 
-    def parse_to_object(self, network):
-        self.parse_nodes(self.networkStructure.findall(self.namespace + 'nodes')[0], network)
-        self.parse_links(self.networkStructure.findall(self.namespace + 'links')[0], network)
-        # self.parse_demands(self.root.findall(self.namespace + 'demands')[0], network)
+    def parse_to_object(self):
+        self.parse_nodes(self.networkStructure.findall(self.namespace + 'nodes')[0])
+        self.parse_links(self.networkStructure.findall(self.namespace + 'links')[0])
+        # self.parse_demands(self.root.findall(self.namespace + 'demands')[0])
+        return self.network
 
-    def parse_nodes(self, nodes, network):
-        for node in self.parse_nodes_list(nodes):
-            network.nodes.append(Node(self.parse_id(node), self.parse_coordinates(node)))
+    def parse_nodes(self, nodes):
+        for index, node in enumerate(self.parse_nodes_list(nodes)):
+            self.network.nodes.append(Node(index, self.parse_id(node), self.parse_coordinates(node)))
 
-    def parse_links(self, links, network):
+    def parse_links(self, links):
         for link in self.parse_links_list(links):
-            network.links.append(
+            self.network.links.append(
                 Link(self.parse_id(link), self.parse_source(link), self.parse_target(link),
                      self.parse_setup_cost(link), self.parse_modules(link)))
 
-    def parse_demands(self, demands, network):
+    def parse_demands(self, demands):
         for demand in self.parse_demands_list(demands):
-            network.demands.append(
+            self.network.demands.append(
                 Demand(self.parse_id(demand), self.parse_source(demand), self.parse_target(demand),
                        self.parse_demand_value(demand),
                        self.parse_admissible_paths(demand)))
@@ -36,12 +38,6 @@ class SNDlibParser(object):
     def parse_namespace(self, root):
         namespace = re.match('\{.*\}', root.tag)
         return namespace.group(0) if namespace else ''
-
-    def parse_coordinates(self, node):
-        coordinates = node.find(self.namespace + 'coordinates')
-        x = float(coordinates.find(self.namespace + 'x').text)
-        y = float(coordinates.find(self.namespace + 'y').text)
-        return {'x': x, 'y': y}
 
     def parse_id(self, node):
         return node.attrib['id']
@@ -64,17 +60,23 @@ class SNDlibParser(object):
     def parse_setup_cost(self, node):
         return node.find(self.namespace + 'setupCost').text
 
+    def parse_demand_value(self, node):
+        return node.find(self.namespace + 'demandValue').text
+
+    def parse_coordinates(self, node):
+        coordinates = node.find(self.namespace + 'coordinates')
+        x = coordinates.find(self.namespace + 'x').text
+        y = coordinates.find(self.namespace + 'y').text
+        return {'x': x, 'y': y}
+
     def parse_modules(self, node):
         modules = []
         additional_modules = node.find(self.namespace + 'additionalModules')
         for module in additional_modules.findall(self.namespace + 'addModule'):
             capacity = module.find(self.namespace + 'capacity').text
             cost = module.find(self.namespace + 'cost').text
-            modules.append({capacity: cost})
+            modules.append({'capacity': capacity, 'cost': cost})
         return modules
-
-    def parse_demand_value(self, node):
-        return node.find(self.namespace + 'demandValue').text
 
     def parse_admissible_paths(self, node):
         paths = []
