@@ -1,10 +1,11 @@
 class Node(object):
-    def __init__(self, id, coordinates):
+    def __init__(self, index, id, coordinates):
+        self.index = index
         self.id = id
         self.coordinates = coordinates
 
     def get_description(self):
-        return [self.id, self.coordinates]
+        return [self.index, self.id, self.coordinates]
 
 
 class Link(object):
@@ -12,6 +13,7 @@ class Link(object):
         self.id = id
         self.source = source
         self.target = target
+        self.index_pair = []
         self.setup_cost = setup_cost
         self.additional_modules = modules  # [{'capacity': , 'cost': }, ... ]
 
@@ -37,12 +39,80 @@ class Network(object):
         self.links = []
         # self.demands = []
         self.flow_values = {}
+        self.paths = {}
 
-    def calculate_flow_values(self):
+    def calculate_paths(self):
+        print "FLOW VALUES: " + str(self.flow_values)
+        for flow in self.flow_values:
+            print "FLOW" + str(flow)
+            if self.is_connected(flow[0], flow[1]):
+                self.paths[flow] = [flow[0], flow[1]]
+                print "PATH: " + str(self.paths)
+            else:
+                neighbours = self.get_neighbour(flow[0])
+                for neighbour in neighbours:
+                    print neighbour, neighbours
+                    if self.is_connected(neighbour, flow[1]):
+                        self.paths[flow] = [flow[0], neighbour, flow[1]]
+                        print "PATHS: " + str(self.paths)
+                        break
+                    else:
+                        print "BREAK"
+                        for b in neighbours:
+                            x = self.get_neighbour(b)
+                            for i in x:
+                                print "I: " + str(i), " X: " + str(x)
+                                if self.is_connected(i, flow[1]):
+                                    self.paths[flow] = [flow[0], b, i, flow[1]]
+                                    print "PATHS: " + str(self.paths)
+                                    break
+                                else:
+                                    print "DUPA"
+                                    self.paths[flow] = 'unconnected'
+                        # self.paths[flow] = 'unconnected'
+                        # self.seek_another_connection(flow, neighbours)
+
+    def seek_another_connection(self, flow, points):
+        if points:
+            for point in points:
+                neighbours = self.get_neighbour(point)
+                for neighbour in neighbours:
+                    if self.is_connected(neighbour, flow[1]):
+                        print "HERE"
+                        self.paths[flow].append([point, neighbour, flow[1]])
+                        print "PATHS II: " + str(self.paths)
+                        break
+                    else:
+                        self.paths[flow] = 'unconnected'
+
+
+    def get_neighbour(self, number):
+        print "START"
+        neighbour = []
+        # return [link.index_pair for link in self.links if number in link.index_pair]
+        for link in self.links:
+            if number in link.index_pair:
+                # print number, link.index_pair, link.index_pair.index(number)
+                neighbour.append(link.index_pair[0]) if link.index_pair.index(number) == 1 else neighbour.append(link.index_pair[1])
+        print "NEIGHBOUR: " + str(neighbour) + " for " + str(number)
+        return neighbour
+
+    def count_flow_values(self):
         for node1 in self.nodes:
             for node2 in self.nodes:
-                self.flow_values[self.nodes.index(node1), self.nodes.index(node2)] = 10 * (
-                abs(self.nodes.index(node1) - self.nodes.index(node2)))
+                self.flow_values[self.nodes.index(node1), self.nodes.index(node2)] = 10 * abs(
+                    self.nodes.index(node1) - self.nodes.index(node2))
+
+    def fill_link_index_pair(self):
+        for link in self.links:
+            link.index_pair = [self.get_object_by_id(link.source).index, self.get_object_by_id(link.target).index]
+
+    def is_connected(self, index1, index2):
+        for link in self.links:
+            if link.index_pair == [index1, index2] or link.index_pair == [index2, index1]: return True
+        return False
+        # return True if self.get_link_by_source(node1.id) == self.get_link_by_target(node2.id) or self.get_link_by_source(
+        #     node1.id) == self.get_link_by_target(node2.id) else False
 
     def get_nodes(self):
         return [node.get_description() for node in self.nodes]
@@ -52,6 +122,9 @@ class Network(object):
 
     def get_demands(self):
         return [demand.get_description() for demand in self.demands]
+
+    def get_node_by_index(self, index):
+        return [node for node in self.nodes if node.index == index][0]
 
     def get_object_by_id(self, id):
         if id.startswith('Link_'):
