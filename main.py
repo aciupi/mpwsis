@@ -29,3 +29,7 @@ if __name__ == '__main__':
         # print network.get_node_coordinates('Bydgoszcz')
         # print network.get_target('Link_0_5')
         # dist = count_distance(network.get_node_coordinates('Rzeszow'), network.get_node_coordinates('Krakow'))
+
+
+    # Step 1: Distribution of network traffic
+    network.distribute_traffic()

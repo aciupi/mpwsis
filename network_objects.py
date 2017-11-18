@@ -1,5 +1,6 @@
 import numpy as np
-
+from collections import defaultdict
+from heapq import *
 
 class Node(object):
     def __init__(self, index, id, coordinates):
@@ -7,6 +8,7 @@ class Node(object):
         self.id = id
         self.coordinates = coordinates
         self.neighbours = []
+        self.shortest_paths = {}
 
     def get_description(self):
         return [self.index, self.id, self.coordinates, self.neighbours]
@@ -44,6 +46,7 @@ class Network(object):
         self.demands = {}
         self.link_distance = {}
         self.link_cost = {}
+        self.link_cost_of_ones = {}
         self.paths = {}
 
     def get_neighbours(self):
@@ -121,3 +124,25 @@ class Network(object):
 
     def get_target(self, id):
         return self.get_object_by_id(id).target
+
+    #Prawdopodobnie nie bedzie potrzebne, w funkcji dijkstra() jako koszt poda sie po prostu 1.
+    def set_cost_to_ones(self):
+        self.link_cost_of_ones = self.link_cost.copy()
+        for each_cost in self.link_cost_of_ones:
+            self.link_cost_of_ones[each_cost] = 1
+        return self.link_cost
+
+    def distribute_traffic(self):
+        self.find_the_shortest_paths()
+
+
+    def find_the_shortest_paths(self):
+        shortest_path = {}
+        for source_node in self.nodes:
+            for destination_node in self.nodes:
+                source_node.shortest_paths[destination_node.index] = self.dijkstra(source_node, destination_node, 1)
+            print "For node", source_node.index, "the shortest paths are:", source_node.shortest_paths
+
+    def dijkstra(self, source_node, destination_node, cost):
+        #Algorytm do zaimplementowania zwaracajacy liste nodow na najkrotszej sciezce
+        return [1,2,3,4]
