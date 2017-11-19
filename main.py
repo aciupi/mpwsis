@@ -37,9 +37,9 @@ from collections import defaultdict
 #     #for key, value in network.link_cost.iteritems():
 #     #    print key[0], key[1],value
 #
-#     #network.count_existing_link_cost()
-#     for i in network.links:
-#         print (i.source, i.target, i.cost)
+    # network.count_existing_link_cost()
+    #for i in network.links:
+    #    print (i.source, i.target, i.cost)
 
 
 
@@ -66,36 +66,16 @@ class Graph:
         self.distances[(to_node, from_node)] = distance
 
 
-def dijkstra(graph, initial):
-    visited = {initial: 0}
-    path = defaultdict(list)
 
-    nodes = set(graph.nodes)
-
-    while nodes:
-        min_node = None
-        for node in nodes:
-            if node in visited:
-                if min_node is None:
-                    min_node = node
-                elif visited[node] < visited[min_node]:
-                    min_node = node
-
-        if min_node is None:
-            break
-
-        nodes.remove(min_node)
-        current_weight = visited[min_node]
-
-        for edge in graph.edges[min_node]:
-            weight = current_weight + graph.distances[(min_node, edge)]
-            if edge not in visited or weight < visited[edge]:
-                visited[edge] = weight
-                path[edge] = min_node
-
-    return path,visited
 
 if __name__ == '__main__':
+    network = Network()
+    SNDlibParser("sndlib_network.xml").parse_to_object(network)
+
+    network.count_existing_link_cost()
+    # for i in network.links:
+    #     print (i.cost)
+    #print(network.paths)
 
     g = Graph()
     g.add_node('a')
@@ -108,7 +88,43 @@ if __name__ == '__main__':
     g.add_edge('a', 'c', 15)
     g.add_edge('c', 'd', 20)
 
-    print(dijkstra(g, 'd'))
+    #print g.edges
+    #print(dijkstra(g, 'a'))
+    #print (network.nodes[1].get_description())
+    #print (network.nodes[0])
+
+
+
+
+
+    #network.count_flow_values()
+    network.fill_link_index_pair()
+    #network.get_neighbours()
+    #network.count_flow_values_and_cost()
+    network.get_neighbours()
+    for node in network.nodes:
+        print node.neighbours
+
+
+
+
+
+
+    # temporary = []
+    # for i in network.links:
+    #     temporary.append((i.source, i.target, i.cost))
+    #
+    # print (temporary)
+
+    # for i in network.get_nodes():
+    #     temporary.append(i)
+    # print(temporary)
+
+    #print network.get_nodes()
+
+    #network.dijkstra(network.nodes,"Rzeszow")
+
+
     #print(dijkstra(g, 'A')['B'])
     #dijkstra(g,'A')
     # g = Graph()
@@ -134,3 +150,4 @@ if __name__ == '__main__':
     # g.add_edge('E', 'B', 6)
     #
     # print(dijkstra(g, 'A'))
+
