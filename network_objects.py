@@ -54,8 +54,8 @@ class Network(object):
         for node in self.nodes:
             for link in self.links:
                 if node.index in link.index_pair:
-                    node.neighbours.append(link.index_pair[0]) if link.index_pair.index(
-                        node.index) == 1 else node.neighbours.append(link.index_pair[1])
+                    node.neighbours.append(self.get_node_by_index(link.index_pair[0])) if link.index_pair.index(
+                        node.index) == 1 else node.neighbours.append(self.get_node_by_index(link.index_pair[1]))
 
     def count_distance(self, node1, node2):
         distance = np.arccos((np.sin(node1.coordinates['x']) * np.sin(node2.coordinates['y'])) + (
@@ -136,12 +136,12 @@ class Network(object):
     def get_node_by_name(self, name):
         for node in self.nodes:
             if node.id == name:
-                return node.index
+                return node
 
 
     def count_existing_link_cost(self):
         for link in self.links:
-            link.cost = abs((self.get_node_by_name(link.source) - self.get_node_by_name(link.target))) * 10
+            link.cost = abs((self.get_node_by_name(link.source).index - self.get_node_by_name(link.target).index)) * 10
 
 
 
@@ -149,24 +149,18 @@ class Network(object):
     #KROK 1 ALGORYTMU - ROZLOZENIE RUCHU
     def distribute_traffic(self):
         self.find_the_shortest_paths()
-        self.cout_existing_link_cost()
+        #self.cout_existing_link_cost()
 
 
-    # def find_the_shortest_paths(self):
-    #     shortest_path = {}
-    #     for source_node in self.nodes:
-    #         #for destination_node in self.nodes:
-    #         # source_node.shortest_paths = self.dijkstra(source_node, destination_node)
-    #         #print "For node", source_node.index, "the shortest paths are:", source_node.shortest_paths
-    #         #NAPISAC PRINTOWANIE SLOWNIKA
+    def find_the_shortest_paths(self):
+        print self.dijkstra(self.nodes, "Rzeszow")
 
-    # def dijkstra(self, source, target):
-
-    def dijkstra(self, graph, initial):
+    def dijkstra(self, nodes_list, initial):
         visited = {initial: 0}
         path = defaultdict(list)
+        #path ma zwracac liste nodow po ktorych idziemy
 
-        nodes = set(graph)
+        nodes = set(nodes_list)
 
         while nodes:
             min_node = None
@@ -174,7 +168,7 @@ class Network(object):
                 if node.id in visited:
                     if min_node is None:
                         min_node = node
-                    elif visited[node] < visited[min_node]:
+                    elif visited[node.id] < visited[min_node.id]:
                         min_node = node
 
             if min_node is None:
@@ -183,16 +177,14 @@ class Network(object):
             nodes.remove(min_node)
             current_weight = visited[min_node.id]
 
-            # for edge in graph.edges[min_node]:
-            #     weight = current_weight + graph.distances[(min_node, edge)]
-            #     if edge not in visited or weight < visited[edge]:
-            #         visited[edge] = weight
-            #         path[edge] = min_node
             for neighbour in self.get_node_by_name(min_node.id).neighbours:
-                weight=current_weight+abs((self.get_node_by_name(min_node.id)-self.get_node_by_name(neighbour.id))) * 10
-                print neighbour.id, weight
-
-        return 1
+                # weight=current_weight+abs((self.get_node_by_name(min_node.id).index-/
+                #                           self.get_node_by_name(neighbour.id).index)) * 10
+                weight=current_weight+1
+                if neighbour.id not in visited or weight < visited[neighbour.id]:
+                    visited[neighbour.id] = weight
+                    path[neighbour.id].append(min_node.id)
+        return visited, path
 
 
 
