@@ -1,6 +1,7 @@
 import numpy as np
 from collections import defaultdict
 from heapq import *
+# from priodict import priorityDictionary
 
 class Node(object):
     def __init__(self, index, id, coordinates):
@@ -22,7 +23,7 @@ class Link(object):
         self.index_pair = []
         self.setup_cost = None
         self.capacity = capacity
-
+        self.cost = None
     def get_description(self):
         return [self.id, self.source, self.target, self.setup_cost, self.capacity]
 
@@ -132,17 +133,34 @@ class Network(object):
             self.link_cost_of_ones[each_cost] = 1
         return self.link_cost
 
+    def get_node_by_name(self, name):
+        for node in self.nodes:
+            if node.id == name:
+                return node.index
+
+
+    def count_existing_link_cost(self):
+        for link in self.links:
+            link.cost = abs((self.get_node_by_name(link.source) - self.get_node_by_name(link.target))) * 10
+
+
+
+
+    #KROK 1 ALGORYTMU - ROZLOZENIE RUCHU
     def distribute_traffic(self):
         self.find_the_shortest_paths()
+        self.cout_existing_link_cost()
 
 
-    def find_the_shortest_paths(self):
-        shortest_path = {}
-        for source_node in self.nodes:
-            for destination_node in self.nodes:
-                source_node.shortest_paths[destination_node.index] = self.dijkstra(source_node, destination_node, 1)
-            print "For node", source_node.index, "the shortest paths are:", source_node.shortest_paths
+    # def find_the_shortest_paths(self):
+    #     shortest_path = {}
+    #     for source_node in self.nodes:
+    #         #for destination_node in self.nodes:
+    #         # source_node.shortest_paths = self.dijkstra(source_node, destination_node)
+    #         #print "For node", source_node.index, "the shortest paths are:", source_node.shortest_paths
+    #         #NAPISAC PRINTOWANIE SLOWNIKA
 
-    def dijkstra(self, source_node, destination_node, cost):
-        #Algorytm do zaimplementowania zwaracajacy liste nodow na najkrotszej sciezce
-        return [1,2,3,4]
+    # def dijkstra(self, source, target):
+
+
+
