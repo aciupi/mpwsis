@@ -36,3 +36,7 @@ if __name__ == '__main__':
     network.distribute_traffic()
     #for key, value in network.link_cost.iteritems():
     #    print key[0], key[1],value
+    # for node in network.nodes:
+    #     print node.id, node.shortest_paths
+    for node in network.nodes:
+        print node.id, node.shortest_paths

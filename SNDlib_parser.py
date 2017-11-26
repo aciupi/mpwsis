@@ -1,7 +1,7 @@
 import re
 import xml.etree.ElementTree as ET
 
-from network_objects import Node, Link
+from network_objects import Node, Link, Demand
 
 
 class SNDlibParser(object):
@@ -14,6 +14,7 @@ class SNDlibParser(object):
     def parse_to_object(self, network):
         self.parse_nodes(self.networkStructure.findall(self.namespace + 'nodes')[0], network)
         self.parse_links(self.networkStructure.findall(self.namespace + 'links')[0], network)
+        self.parse_demands(self.root.findall(self.namespace + 'demands')[0], network)
 
     def parse_nodes(self, nodes, network):
         for index, node in enumerate(self.parse_nodes_list(nodes)):
@@ -23,6 +24,10 @@ class SNDlibParser(object):
         for link in self.parse_links_list(links):
             network.links.append(
                 Link(self.parse_id(link), self.parse_source(link), self.parse_target(link), self.parse_capacity(link)))
+
+    def parse_demands(self, demands, network):
+        for index, demand in enumerate(self.parse_demands_list(demands)):
+            network.demands.append(Demand(index, self.parse_demand_source(demand), self.parse_demand_target(demand), self.parse_demand_value(demand)))
 
     def parse_namespace(self, root):
         namespace = re.match('\{.*\}', root.tag)
@@ -43,11 +48,23 @@ class SNDlibParser(object):
     def parse_links_list(self, nodes):
         return nodes.findall(self.namespace + 'link')
 
+    def parse_demands_list(self, demands):
+        return demands.findall(self.namespace + 'demand')
+
     def parse_source(self, node):
         return node.find(self.namespace + 'source').text
 
     def parse_target(self, node):
         return node.find(self.namespace + 'target').text
+
+    def parse_demand_source(self, demand):
+        return demand.find(self.namespace + 'source').text
+
+    def parse_demand_target(self, demand):
+        return demand.find(self.namespace + 'target').text
+
+    def parse_demand_value(self, demand):
+        return demand.find(self.namespace + 'demandValue').text
 
     def parse_setup_cost(self, node):
         return node.find(self.namespace + 'setupCost').text

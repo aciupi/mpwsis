@@ -24,30 +24,31 @@ class Link(object):
         self.setup_cost = None
         self.capacity = capacity
         self.cost = None
+        self.used_capacity = 0
+
     def get_description(self):
         return [self.id, self.source, self.target, self.setup_cost, self.capacity]
 
 
 class Demand(object):
-    def __init__(self, id, source, target, demand_value, admissible_paths=None):
+    def __init__(self, id, source, target, demand_value):
         self.id = id
         self.source = source
         self.target = target
         self.demand_value = demand_value
-        self.admissible_paths = admissible_paths  # [{'path_id': [link.id, link.id ...]}, ... ]
+        #self.admissible_paths = admissible_paths  # [{'path_id': [link.id, link.id ...]}, ... ]
 
     def get_description(self):
-        return [self.id, self.source, self.target, self.demand_value, self.admissible_paths]
+        return [self.id, self.source, self.target, self.demand_value]
 
 
 class Network(object):
     def __init__(self):
         self.nodes = []
         self.links = []
-        self.demands = {}
+        self.demands = []
         self.link_distance = {}
         self.link_cost = {}
-        self.link_cost_of_ones = {}
         self.paths = {}
 
     def get_neighbours(self):
@@ -69,8 +70,8 @@ class Network(object):
     def count_flow_values_and_cost(self):
         for node1 in self.nodes:
             for node2 in self.nodes:
-                self.demands[self.nodes.index(node1), self.nodes.index(node2)] = 10 * abs(
-                    self.nodes.index(node1) - self.nodes.index(node2))
+                # self.demands[self.nodes.index(node1), self.nodes.index(node2)] = 10 * abs(
+                #     self.nodes.index(node1) - self.nodes.index(node2))
                 distance = self.count_distance(node1, node2)
                 self.link_distance[self.nodes.index(node1), self.nodes.index(node2)] = distance
                 self.link_cost[self.nodes.index(node1), self.nodes.index(node2)] = 1000 * (
@@ -91,8 +92,8 @@ class Network(object):
     def get_links(self):
         return [link.get_description() for link in self.links]
 
-    # def get_demands(self):
-    #     return [demand.get_description() for demand in self.demands]
+    def get_demands(self):
+        return [demand.get_description() for demand in self.demands]
 
     def get_node_by_index(self, index):
         return [node for node in self.nodes if node.index == index][0]
@@ -111,11 +112,11 @@ class Network(object):
     def get_link_by_target(self, target):
         return [link for link in self.links if link.target == target]
 
-    # def get_demand_by_source(self, source):
-    #     return [demand for demand in self.demands if demand.source == source]
-    #
-    # def get_demand_by_target(self, target):
-    #     return [demand for demand in self.demands if demand.target == target]
+    def get_demand_by_source(self, source):
+        return [demand for demand in self.demands if demand.source == source]
+
+    def get_demand_by_target(self, target):
+        return [demand for demand in self.demands if demand.target == target]
 
     def get_node_coordinates(self, id):
         return self.get_object_by_id(id).coordinates
@@ -126,44 +127,33 @@ class Network(object):
     def get_target(self, id):
         return self.get_object_by_id(id).target
 
-    #Prawdopodobnie nie bedzie potrzebne, w funkcji dijkstra() jako koszt poda sie po prostu 1.
-    def set_cost_to_ones(self):
-        self.link_cost_of_ones = self.link_cost.copy()
-        for each_cost in self.link_cost_of_ones:
-            self.link_cost_of_ones[each_cost] = 1
-        return self.link_cost
-
     def get_node_by_name(self, name):
         for node in self.nodes:
             if node.id == name:
                 return node
-
 
     def count_existing_link_cost(self):
         for link in self.links:
             link.cost = abs((self.get_node_by_name(link.source).index - self.get_node_by_name(link.target).index)) * 10
 
 
-
-
     #KROK 1 ALGORYTMU - ROZLOZENIE RUCHU
     def distribute_traffic(self):
         self.find_the_shortest_paths()
-        #self.cout_existing_link_cost()
-
 
     def find_the_shortest_paths(self):
-        print self.dijkstra(self.nodes, "Rzeszow")
+        for node in self.nodes:
+            node.shortest_paths = self.dijkstra(self.nodes, node.id)
 
     def dijkstra(self, nodes_list, initial):
         visited = {initial: 0}
         path = defaultdict(list)
-        #path ma zwracac liste nodow po ktorych idziemy
 
         nodes = set(nodes_list)
 
         while nodes:
             min_node = None
+
             for node in nodes:
                 if node.id in visited:
                     if min_node is None:
@@ -183,8 +173,10 @@ class Network(object):
                 weight=current_weight+1
                 if neighbour.id not in visited or weight < visited[neighbour.id]:
                     visited[neighbour.id] = weight
+                    for each in path[min_node.id]:
+                        path[neighbour.id].append(each)
                     path[neighbour.id].append(min_node.id)
-        return visited, path
+        return path
 
 
 
