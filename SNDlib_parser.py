@@ -14,7 +14,7 @@ class SNDlibParser(object):
     def parse_to_object(self, network):
         self.parse_nodes(self.networkStructure.findall(self.namespace + 'nodes')[0], network)
         self.parse_links(self.networkStructure.findall(self.namespace + 'links')[0], network)
-        self.parse_demands(self.root.findall(self.namespace + 'demands')[0], network)
+        #self.parse_demands(self.root.findall(self.namespace + 'demands')[0], network)
 
     def parse_nodes(self, nodes, network):
         for index, node in enumerate(self.parse_nodes_list(nodes)):

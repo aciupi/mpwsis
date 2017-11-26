@@ -38,5 +38,4 @@ if __name__ == '__main__':
     #    print key[0], key[1],value
     # for node in network.nodes:
     #     print node.id, node.shortest_paths
-    for node in network.nodes:
-        print node.id, node.shortest_paths
+    print network.demands

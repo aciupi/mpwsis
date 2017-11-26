@@ -46,7 +46,7 @@ class Network(object):
     def __init__(self):
         self.nodes = []
         self.links = []
-        self.demands = []
+        self.demands = {}
         self.link_distance = {}
         self.link_cost = {}
         self.paths = {}
@@ -70,8 +70,8 @@ class Network(object):
     def count_flow_values_and_cost(self):
         for node1 in self.nodes:
             for node2 in self.nodes:
-                # self.demands[self.nodes.index(node1), self.nodes.index(node2)] = 10 * abs(
-                #     self.nodes.index(node1) - self.nodes.index(node2))
+                self.demands[self.nodes.index(node1), self.nodes.index(node2)] = 10 * abs(
+                    self.nodes.index(node1) - self.nodes.index(node2))
                 distance = self.count_distance(node1, node2)
                 self.link_distance[self.nodes.index(node1), self.nodes.index(node2)] = distance
                 self.link_cost[self.nodes.index(node1), self.nodes.index(node2)] = 1000 * (
