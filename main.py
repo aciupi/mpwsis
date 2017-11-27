@@ -33,9 +33,18 @@ if __name__ == '__main__':
 
 
     # Step 1: Distribution of network traffic
+    for node in network.nodes:
+        print node.index, node.id
+
     network.distribute_traffic()
-    #for key, value in network.link_cost.iteritems():
-    #    print key[0], key[1],value
+    network.print_final_distribution()
+
+    print "Amount of demands: " + str(len(network.demands))
+    print "Distributed: " + str(len(network.final_paths))
+    print "Not distributed: " + str(len(network.not_distributed))
+
     # for node in network.nodes:
-    #     print node.id, node.shortest_paths
-    print network.demands
+    #     if node.id == 'Gdansk':
+    #         print node.id, node.shortest_paths
+
+    # network.parse_shortest_path_to_links_list(0, 11)

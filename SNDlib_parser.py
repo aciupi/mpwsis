@@ -21,9 +21,11 @@ class SNDlibParser(object):
             network.nodes.append(Node(index, self.parse_id(node), self.parse_coordinates(node)))
 
     def parse_links(self, links, network):
-        for link in self.parse_links_list(links):
+        for i, link in enumerate(self.parse_links_list(links)):
             network.links.append(
                 Link(self.parse_id(link), self.parse_source(link), self.parse_target(link), self.parse_capacity(link)))
+            network.links.append(
+                Link(i, self.parse_target(link), self.parse_source(link), self.parse_capacity(link)))
 
     def parse_demands(self, demands, network):
         for index, demand in enumerate(self.parse_demands_list(demands)):
@@ -72,4 +74,4 @@ class SNDlibParser(object):
     def parse_capacity(self, node):
         additional_modules = node.find(self.namespace + 'additionalModules')
         module = additional_modules.find(self.namespace + 'addModule')
-        return module.find(self.namespace + 'capacity').text
+        return float(module.find(self.namespace + 'capacity').text)

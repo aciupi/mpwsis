@@ -1,6 +1,8 @@
 import numpy as np
 from collections import defaultdict
 from heapq import *
+
+
 # from priodict import priorityDictionary
 
 class Node(object):
@@ -36,7 +38,7 @@ class Demand(object):
         self.source = source
         self.target = target
         self.demand_value = demand_value
-        #self.admissible_paths = admissible_paths  # [{'path_id': [link.id, link.id ...]}, ... ]
+        # self.admissible_paths = admissible_paths  # [{'path_id': [link.id, link.id ...]}, ... ]
 
     def get_description(self):
         return [self.id, self.source, self.target, self.demand_value]
@@ -47,9 +49,10 @@ class Network(object):
         self.nodes = []
         self.links = []
         self.demands = {}
+        self.not_distributed = {}
         self.link_distance = {}
         self.link_cost = {}
-        self.paths = {}
+        self.final_paths = defaultdict(list)
 
     def get_neighbours(self):
         for node in self.nodes:
@@ -59,13 +62,15 @@ class Network(object):
                         node.index) == 1 else node.neighbours.append(self.get_node_by_index(link.index_pair[1]))
 
     def count_distance(self, node1, node2):
-        distance = np.arccos((np.sin(node1.coordinates['x']) * np.sin(node2.coordinates['y'])) + (
+        distance = np.arccos((np.sin(node1.coordinates['x']) * np.sin(node2.coordinates['x'])) + (
             np.cos(node1.coordinates['x']) * np.cos(node2.coordinates['x']) * np.cos(
                 np.abs(node1.coordinates['y'] - node2.coordinates['y']))))
-        return np.around(distance * 111.195, 4)
+        distance *= 111.195
+        return np.around(distance, 4)
 
     def count_cost(self, distance):
-        return np.around(2 * pow(distance, 4), 2)
+        cost = 2 * pow(distance, 4)
+        return np.around(cost, 2)
 
     def count_flow_values_and_cost(self):
         for node1 in self.nodes:
@@ -98,6 +103,11 @@ class Network(object):
     def get_node_by_index(self, index):
         return [node for node in self.nodes if node.index == index][0]
 
+    def get_link_by_index_pair(self, source_index, target_index):
+        for link in self.links:
+            if link.index_pair == [source_index, target_index]: return link
+        return None
+
     def get_object_by_id(self, id):
         if id.startswith('Link_'):
             return [link for link in self.links if link.id == id][0]
@@ -111,6 +121,9 @@ class Network(object):
 
     def get_link_by_target(self, target):
         return [link for link in self.links if link.target == target]
+
+    def get_link_by_source_and_target(self, source, target):
+        return [link for link in self.links if (link.source == source and link.target == target)][0]
 
     def get_demand_by_source(self, source):
         return [demand for demand in self.demands if demand.source == source]
@@ -136,10 +149,11 @@ class Network(object):
         for link in self.links:
             link.cost = abs((self.get_node_by_name(link.source).index - self.get_node_by_name(link.target).index)) * 10
 
-
-    #KROK 1 ALGORYTMU - ROZLOZENIE RUCHU
+    # KROK 1 ALGORYTMU - ROZLOZENIE RUCHU
     def distribute_traffic(self):
         self.find_the_shortest_paths()
+        self.distribute_traffic_between_neighbours()
+        self.distribute_traffic_via_shortest_paths()
 
     def find_the_shortest_paths(self):
         for node in self.nodes:
@@ -170,7 +184,7 @@ class Network(object):
             for neighbour in self.get_node_by_name(min_node.id).neighbours:
                 # weight=current_weight+abs((self.get_node_by_name(min_node.id).index-/
                 #                           self.get_node_by_name(neighbour.id).index)) * 10
-                weight=current_weight+1
+                weight = current_weight + 1
                 if neighbour.id not in visited or weight < visited[neighbour.id]:
                     visited[neighbour.id] = weight
                     for each in path[min_node.id]:
@@ -178,5 +192,45 @@ class Network(object):
                     path[neighbour.id].append(min_node.id)
         return path
 
+    def is_enough_capacity(self, link, demand):
+        return True if link and self.demands[demand] <= link.capacity else False
 
+    def put_traffic_into_link(self, link, demand):
+        link.capacity -= self.demands[demand]
+        self.final_paths[demand].append(link)
 
+    def distribute_traffic_between_neighbours(self):
+        for demand in self.demands:
+            if self.is_connected(demand[0], demand[1]) and self.is_enough_capacity(
+                    self.get_link_by_index_pair(demand[0], demand[1]),
+                    demand) and demand not in self.final_paths.keys():
+                self.put_traffic_into_link(self.get_link_by_index_pair(demand[0], demand[1]), demand)
+
+    def distribute_traffic_via_shortest_paths(self):
+        for demand in self.demands:
+            if demand not in self.final_paths:
+                for link in self.parse_shortest_path_to_links_list(demand[0], demand[1]):
+                    if self.is_enough_capacity(link, demand):
+                        self.put_traffic_into_link(link, demand)
+                    else:
+                        self.not_distributed[demand] = self.demands[demand]
+
+    def print_final_distribution(self):
+        for demand, path in self.final_paths.iteritems():
+            print "\nRuch miedzy {}, {} o wartosci {} przez linki: ".format(self.get_node_by_index(demand[0]).id,
+                                                                            self.get_node_by_index(demand[1]).id,
+                                                                            self.demands[demand])
+            for link in path:
+                print "({}, {}), ".format(link.source, link.target),
+
+    def parse_shortest_path_to_links_list(self, start, end):
+        links_list = []
+        node = self.get_node_by_index(start)
+        end_id = self.get_node_by_index(end).id
+        if node.shortest_paths[end_id]:
+            for current, next in zip(node.shortest_paths[end_id], node.shortest_paths[end_id][1:]):
+                print self.get_link_by_source_and_target(current, next).id
+                links_list.append(self.get_link_by_source_and_target(current, next))
+            links_list.append(self.get_link_by_source_and_target(node.shortest_paths[end_id][-1], end_id))
+            print links_list
+        return links_list
