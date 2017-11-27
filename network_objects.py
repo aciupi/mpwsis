@@ -161,6 +161,10 @@ class Network(object):
         self.search_for_the_most_used_node()
         self.add_first_link()
 
+        self.find_the_shortest_paths()
+        self.distribute_traffic_between_neighbours()
+        self.distribute_traffic_via_shortest_paths()
+
     def find_the_shortest_paths(self):
         for node in self.nodes:
             node.shortest_paths = self.dijkstra(self.nodes, node.id)
@@ -264,5 +268,14 @@ class Network(object):
                 destination_node = node
             if self.link_cost[node, self.most_used_node] < self.link_cost[destination_node, self.most_used_node]:
                 destination_node = node
-        self.links.append(Link(777777, destination_node, self.most_used_node, 10000))
-
+        self.links.append(Link('Link_777777', self.get_node_by_index(destination_node).id, self.get_node_by_index(self.most_used_node).id, 10000))
+        # self.links.append(Link('Link_777778', 1, 2, 10000))
+        # self.links.append(Link('Link_777779', 3, 4, 10000))
+        # self.links.append(Link('Link_777780', 5, 6, 10000))
+        # self.links.append(Link('Link_777781', 7, 8, 10000))
+        # self.links.append(Link('Link_777782', 9, 10, 10000))
+        # self.links.append(Link('Link_777782', 9, 11, 10000))
+        self.link_cost[destination_node, self.most_used_node] = 0
+        self.link_cost[self.most_used_node, destination_node] = 0
+        self.fill_link_index_pair()
+        self.get_neighbours()

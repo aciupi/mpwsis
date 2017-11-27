@@ -37,10 +37,11 @@ if __name__ == '__main__':
     #     print node.index, node.id
     #
     network.distribute_traffic()
-    # network.print_final_distribution()
+    print network.get_links()
+    #network.print_final_distribution()
     #
-    # print "Amount of demands: " + str(len(network.demands))
-    # print "Distributed: " + str(len(network.final_paths))
+    #print "Amount of demands: " + str(len(network.demands))
+    #print "Distributed: " + str(len(network.final_paths))
     #print "Not distributed: " + str(len(network.not_distributed))
     # print network.not_distributed
     # for node in network.nodes:
@@ -48,3 +49,5 @@ if __name__ == '__main__':
     #         print node.id, node.shortest_paths
 
     # network.parse_shortest_path_to_links_list(0, 11)
+    #for link in network.links:
+    #    print link.capacity
