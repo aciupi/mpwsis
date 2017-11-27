@@ -1,4 +1,5 @@
 import numpy as np
+import operator
 from collections import defaultdict
 from heapq import *
 
@@ -50,6 +51,8 @@ class Network(object):
         self.links = []
         self.demands = {}
         self.not_distributed = {}
+        self.most_used_nodes = defaultdict(int)
+        self.most_used_node = None
         self.link_distance = {}
         self.link_cost = {}
         self.final_paths = defaultdict(list)
@@ -66,6 +69,7 @@ class Network(object):
             np.cos(node1.coordinates['x']) * np.cos(node2.coordinates['x']) * np.cos(
                 np.abs(node1.coordinates['y'] - node2.coordinates['y']))))
         distance *= 111.195
+
         return np.around(distance, 4)
 
     def count_cost(self, distance):
@@ -154,6 +158,8 @@ class Network(object):
         self.find_the_shortest_paths()
         self.distribute_traffic_between_neighbours()
         self.distribute_traffic_via_shortest_paths()
+        self.search_for_the_most_used_node()
+        self.add_first_link()
 
     def find_the_shortest_paths(self):
         for node in self.nodes:
@@ -229,8 +235,34 @@ class Network(object):
         end_id = self.get_node_by_index(end).id
         if node.shortest_paths[end_id]:
             for current, next in zip(node.shortest_paths[end_id], node.shortest_paths[end_id][1:]):
-                print self.get_link_by_source_and_target(current, next).id
+                #print self.get_link_by_source_and_target(current, next).id
                 links_list.append(self.get_link_by_source_and_target(current, next))
             links_list.append(self.get_link_by_source_and_target(node.shortest_paths[end_id][-1], end_id))
-            print links_list
+            #print links_list
         return links_list
+
+    def search_for_the_most_used_node(self):
+        for node1, node2 in self.not_distributed:
+            self.most_used_nodes[node1] = self.most_used_nodes[node1] + 1
+            self.most_used_nodes[node2] = self.most_used_nodes[node2] + 1
+        sorted_x = sorted(self.most_used_nodes.items(), key=operator.itemgetter(1))
+        self.most_used_nodes = sorted_x
+        self.most_used_node = self.most_used_nodes[-1][0]
+
+    def add_first_link(self):
+        nodes_to_evaluate_cost = []
+        for node1, node2 in self.not_distributed:
+            if node1 == self.most_used_node and node2 not in nodes_to_evaluate_cost:
+                    nodes_to_evaluate_cost.append(node2)
+            if node2 == self.most_used_node and node1 not in nodes_to_evaluate_cost:
+                nodes_to_evaluate_cost.append(node1)
+        destination_node = None
+        for node in nodes_to_evaluate_cost:
+            if destination_node == None:
+                destination_node = node
+            if self.link_cost[self.most_used_node, node] < self.link_cost[self.most_used_node, destination_node]:
+                destination_node = node
+            if self.link_cost[node, self.most_used_node] < self.link_cost[destination_node, self.most_used_node]:
+                destination_node = node
+        self.links.append(Link(777777, destination_node, self.most_used_node, 10000))
+
