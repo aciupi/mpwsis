@@ -83,12 +83,13 @@ class Network(object):
     def count_flow_values_and_cost(self):
         for node1 in self.nodes:
             for node2 in self.nodes:
-                self.demands[self.nodes.index(node1), self.nodes.index(node2)] = 10 * abs(
-                    self.nodes.index(node1) - self.nodes.index(node2))
-                distance = self.count_distance(node1, node2)
-                self.link_distance[self.nodes.index(node1), self.nodes.index(node2)] = distance
-                self.link_cost[self.nodes.index(node1), self.nodes.index(node2)] = 1000 * (
-                    self.count_cost(distance / 100))
+                if node1 != node2:
+                    self.demands[self.nodes.index(node1), self.nodes.index(node2)] = 10 * abs(
+                        self.nodes.index(node1) - self.nodes.index(node2))
+                    distance = self.count_distance(node1, node2)
+                    self.link_distance[self.nodes.index(node1), self.nodes.index(node2)] = distance
+                    self.link_cost[self.nodes.index(node1), self.nodes.index(node2)] = 1000 * (
+                        self.count_cost(distance / 100))
 
     def fill_link_index_pair(self):
         for link in self.links:
@@ -207,8 +208,16 @@ class Network(object):
                     path[neighbour.id].append(min_node.id)
         return path
 
-    def is_enough_capacity(self, link, demand):
-        return True if link and self.demands[demand] <= link.capacity else False
+    def is_enough_capacity(self, links, demand):
+        result = True
+        if links:
+            for link in links:
+                if self.demands[demand] <= link.capacity:
+                    pass
+                else:
+                    result = False
+                    break
+        return result
 
     def put_traffic_into_link(self, link, demand):
         link.capacity -= self.demands[demand]
@@ -217,18 +226,20 @@ class Network(object):
     def distribute_traffic_between_neighbours(self):
         for demand in self.demands:
             if self.is_connected(demand[0], demand[1]) and self.is_enough_capacity(
-                    self.get_link_by_index_pair(demand[0], demand[1]),
+                    [self.get_link_by_index_pair(demand[0], demand[1])],
                     demand) and demand not in self.final_paths.keys():
                 self.put_traffic_into_link(self.get_link_by_index_pair(demand[0], demand[1]), demand)
 
     def distribute_traffic_via_shortest_paths(self):
         for demand in self.demands:
+            print demand
             if demand not in self.final_paths:
-                for link in self.parse_shortest_path_to_links_list(demand[0], demand[1]):
-                    if self.is_enough_capacity(link, demand):
+                if self.is_enough_capacity(self.parse_shortest_path_to_links_list(demand[0], demand[1]), demand):
+                    print self.parse_shortest_path_to_links_list(demand[0], demand[1])
+                    for link in self.parse_shortest_path_to_links_list(demand[0], demand[1]):
                         self.put_traffic_into_link(link, demand)
-                    else:
-                        self.not_distributed[demand] = self.demands[demand]
+                else:
+                    self.not_distributed[demand] = self.demands[demand]
 
     def print_final_distribution(self):
         for demand, path in self.final_paths.iteritems():
