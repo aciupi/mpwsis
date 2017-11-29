@@ -61,8 +61,12 @@ class Network(object):
         for node in self.nodes:
             for link in self.links:
                 if node.index in link.index_pair:
-                    node.neighbours.append(self.get_node_by_index(link.index_pair[0])) if link.index_pair.index(
-                        node.index) == 1 else node.neighbours.append(self.get_node_by_index(link.index_pair[1]))
+                    if link.index_pair.index(node.index) == 1:
+                        if self.get_node_by_index(link.index_pair[0]) not in node.neighbours:
+                            node.neighbours.append(self.get_node_by_index(link.index_pair[0]))
+                    else:
+                        if self.get_node_by_index(link.index_pair[1]) not in node.neighbours:
+                            node.neighbours.append(self.get_node_by_index(link.index_pair[1]))
 
     def count_distance(self, node1, node2):
         distance = np.arccos((np.sin(node1.coordinates['x']) * np.sin(node2.coordinates['x'])) + (
@@ -160,8 +164,9 @@ class Network(object):
         self.distribute_traffic_via_shortest_paths()
         self.search_for_the_most_used_node()
         self.add_first_link()
-
         self.find_the_shortest_paths()
+        for node in self.nodes:
+            print node.id, node.shortest_paths
         self.distribute_traffic_between_neighbours()
         self.distribute_traffic_via_shortest_paths()
 
@@ -268,14 +273,23 @@ class Network(object):
                 destination_node = node
             if self.link_cost[node, self.most_used_node] < self.link_cost[destination_node, self.most_used_node]:
                 destination_node = node
-        self.links.append(Link('Link_777777', self.get_node_by_index(destination_node).id, self.get_node_by_index(self.most_used_node).id, 10000))
-        # self.links.append(Link('Link_777778', 1, 2, 10000))
-        # self.links.append(Link('Link_777779', 3, 4, 10000))
-        # self.links.append(Link('Link_777780', 5, 6, 10000))
-        # self.links.append(Link('Link_777781', 7, 8, 10000))
-        # self.links.append(Link('Link_777782', 9, 10, 10000))
-        # self.links.append(Link('Link_777782', 9, 11, 10000))
+        self.links.append(Link('Link_777777', self.get_node_by_index(destination_node).id,
+                               self.get_node_by_index(self.most_used_node).id, 10000))
+        self.links.append(Link('Link_777777', self.get_node_by_index(self.most_used_node).id,
+                               self.get_node_by_index(destination_node).id, 10000))
+        self.links.append(Link('Link_777778', 'Gdansk',
+                               'Rzeszow', 10000))
+        self.links.append(Link('Link_777778', 'Rzeszow',
+                               'Gdansk', 10000))
+        self.links.append(Link('Link_777779', 'Wroclaw',
+                               'Bialystok', 10000))
+        self.links.append(Link('Link_777779', 'Bialystok',
+                               'Wroclaw', 10000))
         self.link_cost[destination_node, self.most_used_node] = 0
         self.link_cost[self.most_used_node, destination_node] = 0
         self.fill_link_index_pair()
         self.get_neighbours()
+        # for node in self.nodes:
+        #     print "Dla: ", node.id
+        #     for each in node.neighbours:
+        #         print each.id
