@@ -120,8 +120,6 @@ class Network(object):
     def get_object_by_id(self, id):
         if id.startswith('Link_'):
             return [link for link in self.links if link.id == id][0]
-        elif id.startswith('Demand_'):
-            return [demand for demand in self.demands if demand.id == id][0]
         else:
             return [node for node in self.nodes if node.id == id][0]
 
@@ -163,13 +161,22 @@ class Network(object):
         self.find_the_shortest_paths()
         self.distribute_traffic_between_neighbours()
         self.distribute_traffic_via_shortest_paths()
-        self.search_for_the_most_used_node()
-        self.add_first_link()
-        self.find_the_shortest_paths()
-        for node in self.nodes:
-            print node.id, node.shortest_paths
-        self.distribute_traffic_between_neighbours()
-        self.distribute_traffic_via_shortest_paths()
+        print "Distributed: " + str(len(self.final_paths))
+        print "Not distributed: " + str(len(self.not_distributed))
+        print self.not_distributed
+        if len(self.not_distributed):
+            self.demands = self.not_distributed
+            self.search_for_the_most_used_node()
+            for node1, node2 in self.demands:
+                self.get_node_by_index(node1).neighbours = []
+                self.get_node_by_index(node2).neighbours = []
+            self.add_first_link()
+            self.find_the_shortest_paths()
+            # for node1, node2 in self.not_distributed:
+            #     print node1, self.get_node_by_index(node1).neighbours
+            #     print node2, self.get_node_by_index(node2).neighbours
+            # self.distribute_traffic_between_neighbours()
+            self.distribute_traffic_via_shortest_paths()
 
     def find_the_shortest_paths(self):
         for node in self.nodes:
@@ -209,14 +216,15 @@ class Network(object):
         return path
 
     def is_enough_capacity(self, links, demand):
-        result = True
+        result = False
         if links:
             for link in links:
                 if self.demands[demand] <= link.capacity:
                     pass
                 else:
-                    result = False
                     break
+            else:
+                result = True
         return result
 
     def put_traffic_into_link(self, link, demand):
@@ -230,12 +238,19 @@ class Network(object):
                     demand) and demand not in self.final_paths.keys():
                 self.put_traffic_into_link(self.get_link_by_index_pair(demand[0], demand[1]), demand)
 
+    def distribute_traffic_between_neighbours_2(self):
+        for demand in self.not_distributed:
+            if self.is_connected(demand[0], demand[1]) and self.is_enough_capacity(
+                    [self.get_link_by_index_pair(demand[0], demand[1])],
+                    demand) and demand not in self.final_paths.keys():
+                self.put_traffic_into_link(self.get_link_by_index_pair(demand[0], demand[1]), demand)
+
     def distribute_traffic_via_shortest_paths(self):
         for demand in self.demands:
-            print demand
+            #print demand
             if demand not in self.final_paths:
                 if self.is_enough_capacity(self.parse_shortest_path_to_links_list(demand[0], demand[1]), demand):
-                    print self.parse_shortest_path_to_links_list(demand[0], demand[1])
+                    #print self.parse_shortest_path_to_links_list(demand[0], demand[1])
                     for link in self.parse_shortest_path_to_links_list(demand[0], demand[1]):
                         self.put_traffic_into_link(link, demand)
                 else:
@@ -263,10 +278,11 @@ class Network(object):
 
     def search_for_the_most_used_node(self):
         for node1, node2 in self.not_distributed:
-            self.most_used_nodes[node1] = self.most_used_nodes[node1] + 1
-            self.most_used_nodes[node2] = self.most_used_nodes[node2] + 1
+            self.most_used_nodes[node1] += 1
+            self.most_used_nodes[node2] += 1
         sorted_x = sorted(self.most_used_nodes.items(), key=operator.itemgetter(1))
         self.most_used_nodes = sorted_x
+        print "MOST USED NODE: " + str(self.most_used_nodes[-1][0])
         self.most_used_node = self.most_used_nodes[-1][0]
 
     def add_first_link(self):
@@ -282,24 +298,21 @@ class Network(object):
                 destination_node = node
             if self.link_cost[self.most_used_node, node] < self.link_cost[self.most_used_node, destination_node]:
                 destination_node = node
-            if self.link_cost[node, self.most_used_node] < self.link_cost[destination_node, self.most_used_node]:
-                destination_node = node
-        self.links.append(Link('Link_777777', self.get_node_by_index(destination_node).id,
-                               self.get_node_by_index(self.most_used_node).id, 10000))
+            # if self.link_cost[node, self.most_used_node] < self.link_cost[destination_node, self.most_used_node]:
+            #     destination_node = node
         self.links.append(Link('Link_777777', self.get_node_by_index(self.most_used_node).id,
                                self.get_node_by_index(destination_node).id, 10000))
-        self.links.append(Link('Link_777778', 'Gdansk',
-                               'Rzeszow', 10000))
-        self.links.append(Link('Link_777778', 'Rzeszow',
-                               'Gdansk', 10000))
-        self.links.append(Link('Link_777779', 'Wroclaw',
-                               'Bialystok', 10000))
-        self.links.append(Link('Link_777779', 'Bialystok',
-                               'Wroclaw', 10000))
-        self.link_cost[destination_node, self.most_used_node] = 0
+        # self.link_cost[destination_node, self.most_used_node] = 0
         self.link_cost[self.most_used_node, destination_node] = 0
-        self.fill_link_index_pair()
-        self.get_neighbours()
+        self.get_object_by_id('Link_777777').index_pair = [self.most_used_node, destination_node]
+        self.get_node_by_index(self.most_used_node).neighbours.append(self.get_node_by_index(destination_node))
+        # self.fill_link_index_pair()
+        # self.get_neighbours()
+        #print self.most_used_node, destination_node
+        #print self.not_distributed
+        self.not_distributed.pop((self.most_used_node, destination_node))
+        self.final_paths[self.most_used_node, destination_node].append(self.get_object_by_id('Link_777777'))
+        print self.not_distributed
         # for node in self.nodes:
         #     print "Dla: ", node.id
         #     for each in node.neighbours:

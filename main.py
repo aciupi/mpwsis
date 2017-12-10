@@ -4,7 +4,7 @@ from collections import defaultdict
 
 if __name__ == '__main__':
     network = Network()
-    SNDlibParser("sndlib_network.xml").parse_to_object(network)
+    SNDlibParser("siec_testowa.xml").parse_to_object(network)
     # network.count_flow_values()
     network.fill_link_index_pair()
     network.get_neighbours()
@@ -36,12 +36,16 @@ if __name__ == '__main__':
     # for node in network.nodes:
     #     print node.index, node.id
     #
-    network.distribute_traffic()
-    #network.print_final_distribution()
-    #
     print "Amount of demands: " + str(len(network.demands))
+    network.distribute_traffic()
+    # network.print_final_distribution()
+
     print "Distributed: " + str(len(network.final_paths))
     print "Not distributed: " + str(len(network.not_distributed))
+    # for i in network.not_distributed:
+    #     for j in network.final_paths:
+    #         if i == j:
+    #             print i
     # print network.not_distributed
     # for node in network.nodes:
     #     if node.id == 'Gdansk':

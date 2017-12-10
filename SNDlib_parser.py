@@ -23,9 +23,9 @@ class SNDlibParser(object):
     def parse_links(self, links, network):
         for i, link in enumerate(self.parse_links_list(links)):
             network.links.append(
-                Link(self.parse_id(link), self.parse_source(link), self.parse_target(link), self.parse_capacity(link)))
+                Link(self.parse_id(link), self.parse_source(link), self.parse_target(link), 50))
             network.links.append(
-                Link(i, self.parse_target(link), self.parse_source(link), self.parse_capacity(link)))
+                Link(i, self.parse_target(link), self.parse_source(link), 50))
 
     def parse_demands(self, demands, network):
         for index, demand in enumerate(self.parse_demands_list(demands)):
