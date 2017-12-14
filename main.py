@@ -11,11 +11,11 @@ if __name__ == '__main__':
     network.count_flow_values_and_cost()
     # print network.nodes[0].get_description()
     # print network.nodes[1].get_description()
-    #for node in network.nodes:
-    #    print node.get_description()
+    # for node in network.nodes:
+    #     print node.get_description()
     #print network.demands
     #print network.link_distance
-    #print network.link_cost
+    # print network.link_cost
         # network.calculate_paths()
         # print network.paths[5,3]
 

@@ -56,6 +56,8 @@ class Network(object):
         self.link_distance = {}
         self.link_cost = {}
         self.final_paths = defaultdict(list)
+        self.is_link_cost_used = 0
+        self.new_link_id = 777777
 
     def get_neighbours(self):
         for node in self.nodes:
@@ -163,7 +165,7 @@ class Network(object):
         self.distribute_traffic_via_shortest_paths()
         print "Distributed: " + str(len(self.final_paths))
         print "Not distributed: " + str(len(self.not_distributed))
-        print self.not_distributed
+        # print self.not_distributed
         if len(self.not_distributed):
             self.demands = self.not_distributed
             self.search_for_the_most_used_node()
@@ -172,11 +174,46 @@ class Network(object):
                 self.get_node_by_index(node2).neighbours = []
             self.add_first_link()
             self.find_the_shortest_paths()
-            # for node1, node2 in self.not_distributed:
-            #     print node1, self.get_node_by_index(node1).neighbours
-            #     print node2, self.get_node_by_index(node2).neighbours
-            # self.distribute_traffic_between_neighbours()
             self.distribute_traffic_via_shortest_paths()
+        #while self.demands:
+        for node in self.nodes:
+            node.shortest_paths = {}
+        self.is_link_cost_used = 1
+        for node in self.nodes:
+            for neighbour in self.nodes:
+                if node != neighbour:
+                    node.neighbours.append(neighbour)
+        # for node in self.nodes:
+        #     print node.id, " sasiedzi: "
+        #     for neighbour in node.neighbours:
+        #         print neighbour.id
+        self.find_the_shortest_paths()
+        #w tym momencie demands = not distributed
+        for demand in self.demands:
+            # print self.link_cost
+            for node in self.nodes:
+                print node.id, node.shortest_paths
+            # for node in self.nodes:
+            #     print node.id, " sasiedzi: "
+            #     for neighbour in node.neighbours:
+            #         print neighbour.id
+            # print self.get_node_by_index(demand[0]).id, self.get_node_by_index(demand[1]).id
+            # print self.get_node_by_index(demand[0]).id, self.get_node_by_index(demand[0]).shortest_paths
+            # self.links.append(Link("Link_" + str(self.new_link_id + 1),
+            #                   self.get_node_by_index(demand[0]).id,
+            #                   self.get_node_by_index(demand[1]).id,
+            #                   10000))
+            # self.link_cost[demand] = 0
+            # self.demands.pop(demand)
+            break
+
+
+
+
+
+
+
+
 
     def find_the_shortest_paths(self):
         for node in self.nodes:
@@ -185,9 +222,7 @@ class Network(object):
     def dijkstra(self, nodes_list, initial):
         visited = {initial: 0}
         path = defaultdict(list)
-
         nodes = set(nodes_list)
-
         while nodes:
             min_node = None
 
@@ -205,14 +240,18 @@ class Network(object):
             current_weight = visited[min_node.id]
 
             for neighbour in self.get_node_by_name(min_node.id).neighbours:
-                # weight=current_weight+abs((self.get_node_by_name(min_node.id).index-/
-                #                           self.get_node_by_name(neighbour.id).index)) * 10
-                weight = current_weight + 1
+                if self.is_link_cost_used == 1:
+                    weight = current_weight + self.link_cost[min_node.index, neighbour.index]
+                else:
+                    weight = current_weight + 1
+                #print 40*'-'
+                #print(visited)
                 if neighbour.id not in visited or weight < visited[neighbour.id]:
                     visited[neighbour.id] = weight
-                    for each in path[min_node.id]:
-                        path[neighbour.id].append(each)
+                    # for each in path[min_node.id]:
+                    #     path[neighbour.id].append(each)
                     path[neighbour.id].append(min_node.id)
+                    #print path
         return path
 
     def is_enough_capacity(self, links, demand):
@@ -270,13 +309,13 @@ class Network(object):
         end_id = self.get_node_by_index(end).id
         if node.shortest_paths[end_id]:
             for current, next in zip(node.shortest_paths[end_id], node.shortest_paths[end_id][1:]):
-                #print self.get_link_by_source_and_target(current, next).id
                 links_list.append(self.get_link_by_source_and_target(current, next))
             links_list.append(self.get_link_by_source_and_target(node.shortest_paths[end_id][-1], end_id))
-            #print links_list
         return links_list
 
     def search_for_the_most_used_node(self):
+        self.most_used_node = None
+        self.most_used_nodes = defaultdict(int)
         for node1, node2 in self.not_distributed:
             self.most_used_nodes[node1] += 1
             self.most_used_nodes[node2] += 1
@@ -298,22 +337,17 @@ class Network(object):
                 destination_node = node
             if self.link_cost[self.most_used_node, node] < self.link_cost[self.most_used_node, destination_node]:
                 destination_node = node
-            # if self.link_cost[node, self.most_used_node] < self.link_cost[destination_node, self.most_used_node]:
-            #     destination_node = node
         self.links.append(Link('Link_777777', self.get_node_by_index(self.most_used_node).id,
                                self.get_node_by_index(destination_node).id, 10000))
-        # self.link_cost[destination_node, self.most_used_node] = 0
         self.link_cost[self.most_used_node, destination_node] = 0
         self.get_object_by_id('Link_777777').index_pair = [self.most_used_node, destination_node]
-        self.get_node_by_index(self.most_used_node).neighbours.append(self.get_node_by_index(destination_node))
-        # self.fill_link_index_pair()
-        # self.get_neighbours()
-        #print self.most_used_node, destination_node
-        #print self.not_distributed
-        self.not_distributed.pop((self.most_used_node, destination_node))
-        self.final_paths[self.most_used_node, destination_node].append(self.get_object_by_id('Link_777777'))
+        #czyszczenie sasiadow i dodanie nowego polaczenia o duzej pojemnosci
+        for node in self.nodes:
+            node.neighbours = []
+        # self.get_node_by_index(self.most_used_node).neighbours.append(self.get_node_by_index(destination_node))
         print self.not_distributed
-        # for node in self.nodes:
-        #     print "Dla: ", node.id
-        #     for each in node.neighbours:
-        #         print each.id
+        self.not_distributed.pop((destination_node, self.most_used_node))
+        self.final_paths[destination_node, self.most_used_node].append(self.get_object_by_id('Link_777777'))
+        #print self.get_node_by_index(self.most_used_node).id
+        #print self.get_node_by_index(destination_node).id
+
