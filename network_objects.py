@@ -1,6 +1,7 @@
 import numpy as np
 import operator
 from collections import defaultdict
+from random import randint
 from heapq import *
 
 
@@ -161,11 +162,12 @@ class Network(object):
     # KROK 1 ALGORYTMU - ROZLOZENIE RUCHU
     def distribute_traffic(self):
         self.find_the_shortest_paths()
+        for node in self.nodes:
+            print node.id, node.shortest_paths
         self.distribute_traffic_between_neighbours()
         self.distribute_traffic_via_shortest_paths()
         print "Distributed: " + str(len(self.final_paths))
         print "Not distributed: " + str(len(self.not_distributed))
-        # print self.not_distributed
         if len(self.not_distributed):
             self.demands = self.not_distributed
             self.search_for_the_most_used_node()
@@ -173,9 +175,38 @@ class Network(object):
                 self.get_node_by_index(node1).neighbours = []
                 self.get_node_by_index(node2).neighbours = []
             self.add_first_link()
-            self.find_the_shortest_paths()
-            self.distribute_traffic_via_shortest_paths()
-        #while self.demands:
+            #self.find_the_shortest_paths()
+            #self.distribute_traffic_via_shortest_paths()
+        while self.demands:
+            self.prepare_for_links_deployment()
+            for demand in self.demands:
+                node = self.get_node_by_index(demand[0])
+                node.shortest_paths = self.dijkstra(self.nodes, node.id)
+                print node.id, node.shortest_paths
+                while node.shortest_paths[self.get_node_by_index(demand[1]).id]:
+                     node.shortest_paths[self.get_node_by_index(demand[1]).id].pop()
+                self.demands.pop(demand)
+                self.final_paths[demand].append(self.get_object_by_id("Link_777777"))
+                break
+
+
+            # for demand in self.demands:
+            #     self.links.append(Link("Link_" + str(self.new_link_id + 1),
+            #                       self.get_node_by_index(demand[0]).id,
+            #                       self.get_node_by_index(demand[1]).id,
+            #                       10000))
+            #     self.link_cost[demand] = 0
+            #     self.final_paths[demand].append(self.get_link_by_source_and_target(self.get_node_by_index(demand[0]).id,
+            #                                                                self.get_node_by_index(demand[1]).id))
+            #     self.demands.pop(demand)
+            #     break
+
+
+
+
+
+
+    def prepare_for_links_deployment(self):
         for node in self.nodes:
             node.shortest_paths = {}
         self.is_link_cost_used = 1
@@ -183,37 +214,6 @@ class Network(object):
             for neighbour in self.nodes:
                 if node != neighbour:
                     node.neighbours.append(neighbour)
-        # for node in self.nodes:
-        #     print node.id, " sasiedzi: "
-        #     for neighbour in node.neighbours:
-        #         print neighbour.id
-        self.find_the_shortest_paths()
-        #w tym momencie demands = not distributed
-        for demand in self.demands:
-            # print self.link_cost
-            for node in self.nodes:
-                print node.id, node.shortest_paths
-            # for node in self.nodes:
-            #     print node.id, " sasiedzi: "
-            #     for neighbour in node.neighbours:
-            #         print neighbour.id
-            # print self.get_node_by_index(demand[0]).id, self.get_node_by_index(demand[1]).id
-            # print self.get_node_by_index(demand[0]).id, self.get_node_by_index(demand[0]).shortest_paths
-            # self.links.append(Link("Link_" + str(self.new_link_id + 1),
-            #                   self.get_node_by_index(demand[0]).id,
-            #                   self.get_node_by_index(demand[1]).id,
-            #                   10000))
-            # self.link_cost[demand] = 0
-            # self.demands.pop(demand)
-            break
-
-
-
-
-
-
-
-
 
     def find_the_shortest_paths(self):
         for node in self.nodes:
@@ -244,14 +244,12 @@ class Network(object):
                     weight = current_weight + self.link_cost[min_node.index, neighbour.index]
                 else:
                     weight = current_weight + 1
-                #print 40*'-'
-                #print(visited)
+
                 if neighbour.id not in visited or weight < visited[neighbour.id]:
                     visited[neighbour.id] = weight
-                    # for each in path[min_node.id]:
-                    #     path[neighbour.id].append(each)
+                    for each in path[min_node.id]:
+                        path[neighbour.id].append(each)
                     path[neighbour.id].append(min_node.id)
-                    #print path
         return path
 
     def is_enough_capacity(self, links, demand):
@@ -339,7 +337,7 @@ class Network(object):
                 destination_node = node
         self.links.append(Link('Link_777777', self.get_node_by_index(self.most_used_node).id,
                                self.get_node_by_index(destination_node).id, 10000))
-        self.link_cost[self.most_used_node, destination_node] = 0
+        #self.link_cost[self.most_used_node, destination_node] = 0
         self.get_object_by_id('Link_777777').index_pair = [self.most_used_node, destination_node]
         #czyszczenie sasiadow i dodanie nowego polaczenia o duzej pojemnosci
         for node in self.nodes:
