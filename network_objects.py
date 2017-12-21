@@ -188,7 +188,12 @@ class Network(object):
                         self.links_deployed +=1
                         self.total_money_spent += self.link_cost[self.get_object_by_id(source).index, self.get_object_by_id(target).index]
                         self.link_cost[self.get_object_by_id(source).index, self.get_object_by_id(target).index] = 0
-                    target = source
+                        #print self.demands
+                        print("Processing demand: {} to {}".format(self.get_node_by_index(demand[0]).id,
+                                                                   self.get_node_by_index(demand[1]).id))
+                        print ("Added path {} to {}".format(self.get_link_by_source_and_target(source,target).source,
+                                self.get_link_by_source_and_target(source,target).target))
+                        print(node.shortest_paths)
                 self.demands.pop(demand)
                 self.final_paths[demand].append(self.get_object_by_id("Link_777777"))
                 break
