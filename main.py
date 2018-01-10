@@ -7,7 +7,7 @@ start_time = time.time()
 
 if __name__ == '__main__':
     network = Network()
-    SNDlibParser("sndlib_network.xml").parse_to_object(network)
+    SNDlibParser("sndlib_europe_medium.xml").parse_to_object(network)
     network.fill_link_index_pair()
     network.get_neighbours()
     network.count_flow_values_and_cost()
