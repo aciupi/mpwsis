@@ -160,6 +160,9 @@ class Network(object):
 
     # KROK 1 ALGORYTMU - ROZLOZENIE RUCHU
     def distribute_traffic(self):
+        print "--------------------------"
+        print "I step of algorithm"
+        print "--------------------------"
         self.find_the_shortest_paths()
         self.distribute_traffic_between_neighbours()
         self.distribute_traffic_via_shortest_paths()
@@ -174,13 +177,18 @@ class Network(object):
             self.add_first_link()
             self.find_the_shortest_paths()
             self.distribute_traffic_via_shortest_paths()
+        print "--------------------------"
+        print "II step of algorithm"
         while self.demands:
             self.prepare_for_links_deployment()
             for demand in self.demands:
                 node = self.get_node_by_index(demand[0])
                 node.shortest_paths = self.dijkstra2(self.nodes, node.id)
-
+                print "--------------------------"
+                print("Processing demand: {} to {}".format(self.get_node_by_index(demand[0]).id,
+                                                           self.get_node_by_index(demand[1]).id))
                 target = self.get_node_by_index(demand[1]).id
+                print "Path: ", node.shortest_paths[target], target
                 while node.shortest_paths[self.get_node_by_index(demand[1]).id]:
                     source = node.shortest_paths[self.get_node_by_index(demand[1]).id].pop()
                     if self.get_link_by_source_and_target(source, target) == False:
@@ -189,11 +197,9 @@ class Network(object):
                         self.total_money_spent += self.link_cost[self.get_object_by_id(source).index, self.get_object_by_id(target).index]
                         self.link_cost[self.get_object_by_id(source).index, self.get_object_by_id(target).index] = 0
                         #print self.demands
-                        print("Processing demand: {} to {}".format(self.get_node_by_index(demand[0]).id,
-                                                                   self.get_node_by_index(demand[1]).id))
-                        print ("Added path {} to {}".format(self.get_link_by_source_and_target(source,target).source,
+                        print ("Added link {} to {}".format(self.get_link_by_source_and_target(source,target).source,
                                 self.get_link_by_source_and_target(source,target).target))
-                        print(node.shortest_paths)
+                    target = source
                 self.demands.pop(demand)
                 self.final_paths[demand].append(self.get_object_by_id("Link_777777"))
                 break
@@ -340,7 +346,7 @@ class Network(object):
             self.most_used_nodes[node2] += 1
         sorted_x = sorted(self.most_used_nodes.items(), key=operator.itemgetter(1))
         self.most_used_nodes = sorted_x
-        print "MOST USED NODE: " + str(self.most_used_nodes[-1][0])
+        #print "MOST USED NODE: " + str(self.most_used_nodes[-1][0])
         self.most_used_node = self.most_used_nodes[-1][0]
 
     def add_first_link(self):
@@ -363,7 +369,6 @@ class Network(object):
         self.get_object_by_id('Link_777777').index_pair = [self.most_used_node, destination_node]
         for node in self.nodes:
             node.neighbours = []
-        print self.not_distributed
         self.not_distributed.pop((destination_node, self.most_used_node))
         self.final_paths[destination_node, self.most_used_node].append(self.get_object_by_id('Link_777777'))
 
